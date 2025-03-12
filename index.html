@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Survey Locator</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD0o0dKB5wifPCznFvQAa6XPj9JYJLm-fU"></script>
+</head>
+<body>
+    <header>
+        <h1>Survey Locator</h1>
+    </header>
+
+    <main>
+        <section class="employee-list-container">
+            <h2>Employee Locations</h2>
+            <div class="employee-list" id="employeeList"></div>
+        </section>
+
+        <div id="mapPopup">
+            <div class="popup-content">
+                <span id="closePopup">&times;</span>
+                <h3>Route Directions</h3>
+                <div id="map"></div>
+                <div id="directionsPanel"></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        fetch('assets/empdata.json')
+            .then(response => response.json())
+            .then(data => {
+                const employees = data.employees;
+                const employeeListDiv = document.getElementById('employeeList');
+                
+                employees.forEach(employee => {
+                    const employeeLink = document.createElement('div');
+                    employeeLink.className = 'employee-link';
+                    employeeLink.innerText = employee.name;
+                    employeeLink.onclick = () => showMap(employee.locations);
+                    employeeListDiv.appendChild(employeeLink);
+                });
+            })
+            .catch(error => console.error('Error loading employee data:', error));
+
+        function showMap(locations) {
+            const mapPopup = document.getElementById('mapPopup');
+            const mapElement = document.getElementById('map');
+            const directionsPanel = document.getElementById('directionsPanel');
+
+            const map = new google.maps.Map(mapElement, {
+                zoom: 12,
+                center: { lat: locations[0].latitude, lng: locations[0].longitude }
+            });
+
+            const directionsService = new google.maps.DirectionsService();
+            const directionsRenderer = new google.maps.DirectionsRenderer();
+            directionsRenderer.setMap(map);
+            directionsRenderer.setPanel(directionsPanel);
+
+            const waypoints = locations.slice(1, locations.length - 1).map(loc => ({
+                location: new google.maps.LatLng(loc.latitude, loc.longitude),
+                stopover: true
+            }));
+
+            const request = {
+                origin: new google.maps.LatLng(locations[0].latitude, locations[0].longitude),
+                destination: new google.maps.LatLng(locations[locations.length - 1].latitude, locations[locations.length - 1].longitude),
+                waypoints: waypoints,
+                travelMode: 'DRIVING'
+            };
+
+            directionsService.route(request, (result, status) => {
+                if (status === 'OK') {
+                    directionsRenderer.setDirections(result);
+                } else {
+                    directionsPanel.innerHTML = `<p style="color: red;">Could not load directions.</p>`;
+                }
+            });
+
+            mapPopup.style.display = 'flex';
+        }
+
+        document.getElementById('closePopup').onclick = () => {
+            document.getElementById('mapPopup').style.display = 'none';
+        };
+    </script>
+</body>
+</html>
