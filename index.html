@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Survey Locator</title>
     <link rel="stylesheet" href="styles.css">
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD0o0dKB5wifPCznFvQAa6XPj9JYJLm-fU"></script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDzR_iwppyWZuYHsn3usvq1TUkmLfYGm4Y&callback=initMap&libraries=geometry"></script>
 </head>
 <body>
     <header>
@@ -22,70 +22,32 @@
             <div class="popup-content">
                 <span id="closePopup">&times;</span>
                 <h3>Route Directions</h3>
+                
+                <div id="floating-panel">
+                    <label for="start">Start:</label>
+                    <select id="start"></select>
+                    
+                    <label for="end">End:</label>
+                    <select id="end"></select>
+
+                    <label for="mode">Mode of Travel:</label>
+                    <select id="mode">
+                        <option value="DRIVING">Driving</option>
+                        <option value="WALKING">Walking</option>
+                        <option value="BICYCLING">Bicycling</option>
+                        <option value="TRANSIT">Transit</option>
+                    </select>
+
+                    <button id="calculateRoute">Show Route</button>
+                </div>
+
                 <div id="map"></div>
-                <div id="directionsPanel"></div>
+                <div id="sidebar"></div>
+                <p id="totalDistance">Total Distance: Calculating...</p>
             </div>
         </div>
     </main>
 
-    <script>
-        fetch('assets/empdata.json')
-            .then(response => response.json())
-            .then(data => {
-                const employees = data.employees;
-                const employeeListDiv = document.getElementById('employeeList');
-                
-                employees.forEach(employee => {
-                    const employeeLink = document.createElement('div');
-                    employeeLink.className = 'employee-link';
-                    employeeLink.innerText = employee.name;
-                    employeeLink.onclick = () => showMap(employee.locations);
-                    employeeListDiv.appendChild(employeeLink);
-                });
-            })
-            .catch(error => console.error('Error loading employee data:', error));
-
-        function showMap(locations) {
-            const mapPopup = document.getElementById('mapPopup');
-            const mapElement = document.getElementById('map');
-            const directionsPanel = document.getElementById('directionsPanel');
-
-            const map = new google.maps.Map(mapElement, {
-                zoom: 12,
-                center: { lat: locations[0].latitude, lng: locations[0].longitude }
-            });
-
-            const directionsService = new google.maps.DirectionsService();
-            const directionsRenderer = new google.maps.DirectionsRenderer();
-            directionsRenderer.setMap(map);
-            directionsRenderer.setPanel(directionsPanel);
-
-            const waypoints = locations.slice(1, locations.length - 1).map(loc => ({
-                location: new google.maps.LatLng(loc.latitude, loc.longitude),
-                stopover: true
-            }));
-
-            const request = {
-                origin: new google.maps.LatLng(locations[0].latitude, locations[0].longitude),
-                destination: new google.maps.LatLng(locations[locations.length - 1].latitude, locations[locations.length - 1].longitude),
-                waypoints: waypoints,
-                travelMode: 'DRIVING'
-            };
-
-            directionsService.route(request, (result, status) => {
-                if (status === 'OK') {
-                    directionsRenderer.setDirections(result);
-                } else {
-                    directionsPanel.innerHTML = `<p style="color: red;">Could not load directions.</p>`;
-                }
-            });
-
-            mapPopup.style.display = 'flex';
-        }
-
-        document.getElementById('closePopup').onclick = () => {
-            document.getElementById('mapPopup').style.display = 'none';
-        };
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
